@@ -254,6 +254,21 @@ function exportSave() {
 	document.execCommand("copy");
 	document.body.removeChild(el);
 }
+function exportChem() {
+	try {
+		let str = localStorage.getItem("chem2");
+		const el = document.createElement("textarea");
+		el.value = str;
+		document.body.appendChild(el);
+		el.select();
+		el.setSelectionRange(0, 99999);
+		document.execCommand("copy");
+		document.body.removeChild(el);
+	}
+	catch {
+		alert("Chemistree 2 save not found; you probably don't even have one")
+	}
+}
 function importSave(imported = undefined, forced = false) {
 	if (imported === undefined)
 		imported = prompt("Paste your save here");
