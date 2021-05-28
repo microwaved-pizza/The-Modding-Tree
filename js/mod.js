@@ -1,26 +1,26 @@
 let modInfo = {
-	name: "The Microwaved Tree",
-	id: "microwavepizza",
+	name: "The Prestige Tree: Wilted",
+	id: "tptwilt",
 	author: "micro",
 	pointsName: "points",
 	discordName: "",
 	discordLink: "",
-	initialStartPoints: new Decimal(0), // Used for hard resets and new players
+	initialStartPoints: new Decimal(10), // Used for hard resets and new players
 	
 	offlineLimit: 1,  // In hours
 }
 
 // Set your version in num and name
 let VERSION = {
-	num: "0.0",
-	name: "meta",
+	num: "0.0.1",
+	name: "tpt but bad",
 }
 
 let changelog = `<h1>Changelog:</h1><br>
-	<h3>v0.0</h3><br>
+	<h3>v0.0.1</h3><br>
 		- the tree exists now<br>
-		- added nothing lol<br>
-		- next up: no???<br>`
+		- added stuff until 2 infinities<br>
+		- next up: hmm<br>`
 
 let winText = `youre done pog`
 
@@ -34,13 +34,22 @@ function getStartPoints(){
 
 // Determines if it should show points/sec
 function canGenPoints(){
-	return false
+	return player.p.upgrades.includes(11)
 }
 
 // Calculate points/sec!
 function getPointGen() {
 	if (!canGenPoints()) {return new Decimal(0)}
 	let gain = new Decimal(1)
+	if (player.inf.milestones.includes("0")) {gain = gain.mul(69420)}
+	if (player.inf.milestones.includes("1")) {gain = gain.mul(69420)}
+	if (player.p.upgrades.includes(12)) {gain = gain.mul(tmp.p.upgrades[12].effect)}
+	if (player.b.upgrades.includes(11)) {gain = gain.mul(tmp.b.effect)}
+	if (player.p.upgrades.includes(24)) {gain = gain.mul(10)}
+	if (player.b.upgrades.includes(12)) {gain = gain.mul(tmp.b.effect.mul(tmp.g.effect))}
+
+	if (player.g.upgrades.includes(14)) {gain = gain.pow(1.115)}
+	if (player.inf.milestones.includes("0")) {gain = gain.pow(new Decimal(0.5).pow(player.inf.milestones.length))}
 	return gain
 }
 
@@ -54,7 +63,7 @@ var displayThings = [
 
 // Determines when the game "ends"
 function isEndgame() {
-	return false
+	return player.inf.points.gte(2) && player.points.gte(1e40)
 }
 
 
