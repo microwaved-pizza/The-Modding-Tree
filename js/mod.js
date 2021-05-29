@@ -12,15 +12,19 @@ let modInfo = {
 
 // Set your version in num and name
 let VERSION = {
-	num: "0.0.1",
-	name: "tpt but bad",
+	num: "0.0.2",
+	name: "ew choice :vomiting_face:",
 }
 
 let changelog = `<h1>Changelog:</h1><br>
 	<h3>v0.0.1</h3><br>
 		- the tree exists now<br>
 		- added stuff until 2 infinities<br>
-		- next up: hmm<br>`
+		- next up: hmm<br>
+	<h3>v0.0.2</h3><br>
+		- layer 3 exists now<br>
+		- added stuff until 3 infinities<br>
+		- next up: get hindered<br>`
 
 let winText = `youre done pog`
 
@@ -43,12 +47,17 @@ function getPointGen() {
 	let gain = new Decimal(1)
 	if (player.inf.milestones.includes("0")) {gain = gain.mul(69420)}
 	if (player.inf.milestones.includes("1")) {gain = gain.mul(69420)}
+	if (player.inf.milestones.includes("2")) {gain = gain.mul(69420)}
 	if (player.p.upgrades.includes(12)) {gain = gain.mul(tmp.p.upgrades[12].effect)}
 	if (player.b.upgrades.includes(11)) {gain = gain.mul(tmp.b.effect)}
 	if (player.p.upgrades.includes(24)) {gain = gain.mul(10)}
 	if (player.b.upgrades.includes(12)) {gain = gain.mul(tmp.b.effect.mul(tmp.g.effect))}
+	if (player.t.upgrades.includes(11)) {gain = gain.mul(1e69)}
+	if (player.s.unlocked) {gain = gain.mul(tmp.s.effect[1])}
+	if (player.s.upgrades.includes(14)) {gain = gain.mul(1e10)}
 
 	if (player.g.upgrades.includes(14)) {gain = gain.pow(1.115)}
+	if (player.g.upgrades.includes(25)) {gain = gain.pow(tmp.g.upgrades[25].effect)}
 	if (player.inf.milestones.includes("0")) {gain = gain.pow(new Decimal(0.5).pow(player.inf.milestones.length))}
 	return gain
 }
@@ -63,7 +72,7 @@ var displayThings = [
 
 // Determines when the game "ends"
 function isEndgame() {
-	return player.inf.points.gte(2) && player.points.gte(1e40)
+	return player.inf.points.gte(3)
 }
 
 
