@@ -44,11 +44,8 @@ function canGenPoints(){
 // Calculate points/sec!
 function getPointGen() {
 	if (!canGenPoints()) {return new Decimal(0)}
-	let gain = new Decimal(1)
-	if (player.inf.milestones.includes("0")) {gain = gain.mul(69420)}
-	if (player.inf.milestones.includes("1")) {gain = gain.mul(69420)}
-	if (player.inf.milestones.includes("2")) {gain = gain.mul(69420)}
-	if (player.p.upgrades.includes(12)) {gain = gain.mul(tmp.p.upgrades[12].effect)}
+	let gain = tmp.p.upgrades[11].effect
+	if (player.p.upgrades.includes(12) && player.h.activeChallenge !== 11) {gain = gain.mul(tmp.p.upgrades[12].effect)}
 	if (player.b.upgrades.includes(11)) {gain = gain.mul(tmp.b.effect)}
 	if (player.p.upgrades.includes(24)) {gain = gain.mul(10)}
 	if (player.b.upgrades.includes(12)) {gain = gain.mul(tmp.b.effect.mul(tmp.g.effect))}
@@ -72,7 +69,7 @@ var displayThings = [
 
 // Determines when the game "ends"
 function isEndgame() {
-	return player.inf.points.gte(3)
+	return player.inf.points.gte(4)
 }
 
 

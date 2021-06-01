@@ -7,12 +7,12 @@ addLayer("p", {
     }},
     color: "#31aeb0",
     row: 0,
-    resource: "prestige points",
+    resource() {return `prestige point${player.p.points.eq(1) ? "" : "s"}`},
     hotkeys: [
         {
             key: "p",
             description: "p: reset your points for prestige points",
-            onPress() { if (player.p.unlocked && canReset("p")) {doReset("p")} }
+            onPress() {if (player.p.unlocked && canReset("p")) {doReset("p")}}
         }
     ],
     symbol: "P",
@@ -28,7 +28,7 @@ addLayer("p", {
         if (player.b.upgrades.includes(13)) {exp = exp.mul(tmp.b.upgrades[13].effect)}
         if (player.t.unlocked) {exp = exp.mul(tmp.t.effect[2])}
         if (player.inf.milestones.includes("1")) {exp = exp.div(new Decimal(2).pow(player.inf.milestones.length))}
-        if (player.inf.milestones.includes("2")) {exp = exp.pow(new Decimal(0.5).pow(player.inf.milestones.length))}
+        if (player.inf.milestones.includes("2")) {exp = exp.root(new Decimal(2).pow(player.inf.milestones.length))}
         return exp
     },
     doReset(layer) {
@@ -52,6 +52,10 @@ addLayer("p", {
             player.p.best = new Decimal(0)
             if (!(player.s.milestones.includes("2"))) {player.p.upgrades = []}
         }
+        if (layer === "h") {
+            player.p.points = new Decimal(0)
+            player.p.best = new Decimal(0)
+        }
         if (layer === "inf") {
             player.p.points = new Decimal(0)
             player.p.best = new Decimal(0)
@@ -63,6 +67,7 @@ addLayer("p", {
             let pow = new Decimal(0.01)
             if (player.t.upgrades.includes(14)) {pow = pow.add(0.9899)}
             if (player.e.upgrades.includes(15)) {pow = pow.add(1.0001)}
+            if (player.h.challPoints[0].gte(0.01)) {pow = pow.add(tmp.h.challenges[11].reward)}
             if (player.p.upgrades.includes(31)) {pow = pow.mul(5)}
             if (player.p.upgrades.includes(32)) {pow = pow.mul(tmp.p.upgrades[32].effect)}
             if (player.p.upgrades.includes(33)) {pow = pow.mul(tmp.p.upgrades[33].effect)}
@@ -72,9 +77,14 @@ addLayer("p", {
             if (player.b.upgrades.includes(22)) {pow = pow.mul(15)}
             if (player.b.upgrades.includes(23)) {pow = pow.mul(150)}
             if (player.b.upgrades.includes(24)) {pow = pow.mul(1500)}
+            if (player.h.upgrades.includes(11)) {pow = pow.mul(tmp.h.upgrades[11].effect)}
             if (player.b.upgrades.includes(25)) {pow = pow.pow(15)}
+            if (player.h.upgrades.includes(12)) {pow = pow.pow(4.2)}
+            if (player.h.upgrades.includes(15)) {pow = pow.pow(10)}
+            player.b.mpow = pow
             let gain = player.p.points.pow(pow)
             if (player.s.milestones.includes("3")) {gain = gain.max(1)}
+            if (player.h.activeChallenge || player.inf.milestones.includes("3")) {gain = gain.min(100)}
             player.p.points = player.p.points.add(getResetGain("p").mul(gain.div(100)).mul(diff))
             if (player.p.points.gt(player.p.best)) {player.p.best = player.p.points}
         }
@@ -83,8 +93,12 @@ addLayer("p", {
         11: {
             fullDisplay() {
                 return `<h3>Begin</h3><br>
-                Generate 1 point per second.<br>
+                Generate ${format(tmp.p.upgrades[11].effect, 2)} point${tmp.p.upgrades[12].effect.eq(1) ? "" : "s"} per second.<br>
                 Cost: 1 prestige point`
+            },
+            effect() {
+                let base = new Decimal(69420).pow(player.inf.milestones.length)
+                return base
             },
             canAfford() {return player.p.points.gte(1)},
             pay() {player.p.points = player.p.points.sub(1)}
@@ -111,7 +125,7 @@ addLayer("p", {
         13: {
             fullDisplay() {
                 return `<h3>Prestige Booster</h3><br>
-                <h3>Prestige Boost</h3> is squared.<br>
+                <h3 style='color: #31aeb0; text-shadow: #000000 0px 0px 10px'>Prestige Boost</h3> is squared.<br>
                 Cost: 5 prestige points`
             },
             unlocked() {return player.p.upgrades.includes(12)},
@@ -121,7 +135,7 @@ addLayer("p", {
         14: {
             fullDisplay() {
                 return `<h3>Prestige Boostest</h3><br>
-                <h3>Prestige Boost</h3> is squared.<br>
+                <h3 style='color: #31aeb0; text-shadow: #000000 0px 0px 10px'>Prestige Boost</h3> is squared.<br>
                 Cost: 10 prestige points`
             },
             unlocked() {return player.p.upgrades.includes(13)},
@@ -158,7 +172,7 @@ addLayer("p", {
         22: {
             fullDisplay() {
                 return `<h3>Booster Booster</h3><br>
-                <h3>Booster Boost</h3> is doubled.<br>
+                <h3 style='color: #31aeb0; text-shadow: #000000 0px 0px 10px'>Booster Boost</h3> is doubled.<br>
                 Cost: 1e750 prestige points`
             },
             unlocked() {return player.p.upgrades.includes(21)},
@@ -168,7 +182,7 @@ addLayer("p", {
         23: {
             fullDisplay() {
                 return `<h3>Booster Boostest</h3><br>
-                <h3>Booster Boost</h3> is quadrupled.<br>
+                <h3 style='color: #31aeb0; text-shadow: #000000 0px 0px 10px'>Booster Boost</h3> is quadrupled.<br>
                 Cost: 1e2,000 prestige points`
             },
             unlocked() {return player.p.upgrades.includes(22)},
@@ -272,16 +286,18 @@ addLayer("b", {
     startData() {return {
         unlocked: false,
 		points: new Decimal(0),
-        best: new Decimal(0)
+        best: new Decimal(0),
+        mpow: new Decimal(0.01),
+        mbase: new Decimal(0.1)
     }},
     color: "#6e64c4",
     row: 1,
-    resource: "boosters",
+    resource() {return `booster${player.b.points.eq(1) ? "" : "s"}`},
     hotkeys: [
         {
             key: "b",
             description: "b: reset your points for boosters",
-            onPress() { if (player.b.unlocked && canReset("b")) {doReset("b")} }
+            onPress() {if (player.b.unlocked && canReset("b")) {doReset("b")}}
         }
     ],
     effect() {
@@ -289,6 +305,8 @@ addLayer("b", {
         if (player.b.milestones.includes("0")) {
             let gain = new Decimal(0.1)
             if (player.g.unlocked) {gain = gain.mul(tmp.g.effect)}
+            if (player.h.upgrades.includes(12)) {gain = gain.mul(tmp.h.upgrades[11].effect)}
+            player.b.mbase = gain
             base = base.add(gain)
         }
         if (player.g.upgrades.includes(12)) {base = base.add(5)}
@@ -302,7 +320,7 @@ addLayer("b", {
         if (player.s.upgrades.includes(12)) {mult = mult.mul(tmp.s.effect[1])}
         return base.pow(effective).mul(mult)
     },
-    effectDescription() {return `which are multiplying prestige point exponent by ${format(tmp.b.effect, 2)} ${player.b.points.gte(10) ? "(softcapped)" : ""}`},
+    effectDescription() {return `which ${player.b.points.eq(1) ? "is" : "are"} multiplying prestige point exponent by ${format(tmp.b.effect, 2)} ${player.b.points.gte(10) ? "(softcapped)" : ""}`},
     layerShown() {return player.p.upgrades.includes(15) || player.b.unlocked},
     symbol: "B",
     position: 0,
@@ -333,14 +351,16 @@ addLayer("b", {
             if (!(player.s.milestones.includes("5"))) {player.b.upgrades = []}
             if (!(player.s.milestones.includes("1"))) {player.b.milestones = []}
         }
+        if (layer === "h") {return}
         if (layer === "inf") {
             player.b.points = new Decimal(0)
             player.b.best = new Decimal(0)
             player.b.upgrades = []
         }
     },
-    resetsNothing() {return player.s.milestones.includes("4")},
     canBuyMax() {return player.s.milestones.includes("4")},
+    resetsNothing() {return player.s.milestones.includes("4")},
+    autoPrestige() {return player.h.milestones.includes("1")},
     upgrades: {
         11: {
             fullDisplay() {
@@ -455,7 +475,7 @@ addLayer("b", {
     milestones: {
         0: {
             requirementDescription: "7 best boosters",
-            effectDescription: "Gain (prestige points^0.01)% of prestige points per second, keep all prestige upgrades on booster reset, and booster base +0.1",
+            effectDescription() {return `Gain (prestige points^${format(player.b.mpow, 2)})% of prestige points per second, keep all prestige upgrades on booster reset and booster base +${format(player.b.mbase, 2)}`},
             done() {return player.b.best.gte(7)}
         },
     }
@@ -469,12 +489,12 @@ addLayer("g", {
     }},
     color: "#a3d9a5",
     row: 1,
-    resource: "generators",
+    resource() {return `generator${player.g.points.eq(1) ? "" : "s"}`},
     hotkeys: [
         {
             key: "g",
             description: "g: reset your points for generators",
-            onPress() { if (player.g.unlocked && canReset("g")) {doReset("g")} }
+            onPress() {if (player.g.unlocked && canReset("g")) {doReset("g")}}
         }
     ],
     effect() {
@@ -486,7 +506,7 @@ addLayer("g", {
         let mult = new Decimal(1)
         return base.pow(effective).mul(mult)
     },
-    effectDescription() {return `which are multiplying booster milestone's last effect's by ${format(tmp.g.effect, 2)} ${player.g.points.gte(10) ? "(hardcapped)" : ""}`},
+    effectDescription() {return `which ${player.g.points.eq(1) ? "is" : "are"} multiplying booster milestone's last effect's by ${format(tmp.g.effect, 2)} ${player.g.points.gte(10) ? "(hardcapped)" : ""}`},
     layerShown() {return player.p.upgrades.includes(25) || player.g.unlocked},
     symbol: "G",
     position: 1,
@@ -513,13 +533,15 @@ addLayer("g", {
             player.g.points = new Decimal(0)
             player.g.best = new Decimal(0)
         }
+        if (layer === "h") {return}
         if (layer === "inf") {
             player.g.points = new Decimal(0)
             player.g.best = new Decimal(0)
         }
     },
-    resetsNothing() {return player.s.milestones.includes("4")},
     canBuyMax() {return player.s.milestones.includes("4")},
+    resetsNothing() {return player.s.milestones.includes("4")},
+    autoPrestige() {return player.h.milestones.includes("1")},
     upgrades: {
         11: {
             fullDisplay() {
@@ -628,59 +650,7 @@ addLayer("g", {
         }
     }
 })
-addLayer("inf", {
-    name: "infinity",
-    startData() {return {
-        unlocked: false,
-		points: new Decimal(0),
-        best: new Decimal(0)
-    }},
-    color: "#ffffff",
-    row: 69420,
-    displayRow: "side",
-    resource: "infinity points",
-    hotkeys: [
-        {
-            key: "I",
-            description: "shift+i: reset your points for infinity points",
-            onPress() { if (player.inf.unlocked && canReset("inf")) {doReset("inf")} }
-        }
-    ],
-    layerShown() {return player.b.upgrades.includes(15) || player.inf.unlocked},
-    symbol: "I",
-    position: 0,
-    type: "static",
-    baseResource: "points",
-    baseAmount() {return player.points},
-    requires: new Decimal(2).pow(1024),
-    exponent() {
-        let exp = new Decimal(2).pow(4)
-        if (player.inf.points.gte(3)) {exp = new Decimal(0)}
-        return exp
-    },
-    base() {
-        let base = new Decimal(2).pow(32)
-        if (player.inf.points.gte(3)) {base = new Decimal(Infinity)}
-        return base
-    },
-    milestones: {
-        0: {
-            requirementDescription: "1 infinity point",
-            effectDescription: "Point gain ^0.5 per milestone. Keep booster milestone on infinity reset. <h3>Begin</h3> is 69420x stronger. <h3>Prestige Boost</h3> is squared.",
-            done() {return player.inf.best.gte(1)}
-        },
-        1: {
-            requirementDescription: "2 infinity point",
-            effectDescription: "Prestige point exponent /2 per milestone. Keep generator upgrades on infinity reset. <h3>Begin</h3> is 69420x stronger.",
-            done() {return player.inf.best.gte(2)}
-        },
-        2: {
-            requirementDescription: "3 infinity point",
-            effectDescription: "Prestige point exponent ^0.5 per milestone. Keep space milestones on infinity reset. Enhancers are not reset on infinity reset. <h3>Begin</h3> is 69420x stronger.",
-            done() {return player.inf.best.gte(3)}
-        }
-    }
-})
+
 addLayer("t", {
     name: "time",
     startData() {return {
@@ -697,7 +667,7 @@ addLayer("t", {
         {
             key: "t",
             description: "t: reset your points for time power",
-            onPress() { if (player.t.unlocked && canReset("t")) {doReset("t")} }
+            onPress() {if (player.t.unlocked && canReset("t")) {doReset("t")}}
         }
     ],
     effect() {
@@ -714,7 +684,7 @@ addLayer("t", {
         if (player.g.upgrades.includes(23)) {boost = boost.pow(1.666)}
         return [gain, timewalls, boost]
     },
-    effectDescription() {return `which are producing ${format(tmp.t.effect[0], 2)} time per second`},
+    effectDescription() {return `which is producing ${format(tmp.t.effect[0], 2)} time per second`},
     layerShown() {return player.inf.points.gte(2) || player.t.unlocked},
     symbol: "T",
     position: 0,
@@ -739,6 +709,12 @@ addLayer("t", {
         player.t.log = log
     },
     doReset(layer) {
+        if (layer === "h") {
+            player.t.points = new Decimal(0)
+            player.t.best = new Decimal(0)
+            player.t.time = new Decimal(0)
+            if (!(player.h.milestones.includes("2"))) {player.t.upgrades = []}
+        }
         if (layer === "inf") {
             player.t.points = new Decimal(0)
             player.t.best = new Decimal(0)
@@ -747,7 +723,9 @@ addLayer("t", {
             player.t.milestones = []
         }
     },
+    canBuyMax() {return player.h.milestones.includes("0")},
     resetsNothing() {return player.t.milestones.includes("4")},
+    autoPrestige() {return player.h.milestones.includes("1")},
     update(diff) {
         if (player.t.unlocked) {
             player.t.time = player.t.time.add(tmp.t.effect[0].mul(diff))
@@ -838,8 +816,8 @@ addLayer("t", {
         [
             "display-text",
             function() {
-                return `You have ${format(player.t.time, 2)} time<br>
-                You have ${format(tmp.t.effect[1], 2)} timewalls, multiplying prestige point exponent by ${format(tmp.t.effect[2], 2)}<br>
+                return `You have <h2 style='color: #006609; text-shadow: #006609 0px 0px 10px'>${format(player.t.time, 2)}</h2> time<br>
+                You have <h2 style='color: #006609; text-shadow: #006609 0px 0px 10px'>${format(tmp.t.effect[1], 2)}</h2> timewalls, multiplying prestige point exponent by ${format(tmp.t.effect[2], 2)}<br>
                 Your next timewall is at ${format(player.t.log.pow(tmp.t.effect[1].add(1)), 2)} time<br>
                 Every timewall increases timewall requirement by ${format(player.t.log, 2)}`
             }
@@ -863,7 +841,7 @@ addLayer("s", {
         {
             key: "s",
             description: "s: reset your points for space power",
-            onPress() { if (player.s.unlocked && canReset("s")) {doReset("s")} }
+            onPress() {if (player.s.unlocked && canReset("s")) {doReset("s")}}
         }
     ],
     effect() {
@@ -916,20 +894,28 @@ addLayer("s", {
         }
     },
     doReset(layer) {
+        if (layer === "h") {
+            player.s.points = new Decimal(0)
+            player.s.best = new Decimal(0)
+            player.s.space = new Decimal(0)
+            if (!(player.h.milestones.includes("2"))) {player.s.upgrades = []}
+        }
         if (layer === "inf") {
             player.s.points = new Decimal(0)
             player.s.best = new Decimal(0)
             player.s.space = new Decimal(0)
             player.s.upgrades = []
             player.s.buyables = {
-                11: 0,
-                21: 0,
-                31: 0,
-                41: 0,
+                11: new Decimal(0),
+                21: new Decimal(0),
+                31: new Decimal(0),
+                41: new Decimal(0),
             }
         }
     },
+    canBuyMax() {return player.h.milestones.includes("0")},
     resetsNothing() {return player.s.milestones.includes("6")},
+    autoPrestige() {return player.h.milestones.includes("1")},
     buyables: {
         11: {
             title: "1st Space Dimension",
@@ -1108,7 +1094,7 @@ addLayer("s", {
         [
             "display-text",
             function() {
-                return `You have ${format(player.s.space, 2)} space, which is multiplying point gain by ${format(tmp.s.effect[1], 2)}`
+                return `You have <h2 style='color: #dfdfdf; text-shadow: #dfdfdf 0px 0px 10px'>${format(player.s.space, 2)}</h2> space, which is multiplying point gain by ${format(tmp.s.effect[1], 2)}`
             }
         ],
         "milestones",
@@ -1121,17 +1107,16 @@ addLayer("e", {
     startData() {return {
         unlocked: false,
 		points: new Decimal(0),
-        best: new Decimal(0),
-        space: new Decimal(1)
+        best: new Decimal(0)
     }},
     color: "#b82fbd",
     row: 2,
-    resource: "enhancers",
+    resource() {return `enhancer${player.e.points.eq(1) ? "" : "s"}`},
     hotkeys: [
         {
             key: "e",
             description: "e: reset your points for enhancers",
-            onPress() { if (player.e.unlocked && canReset("e")) {doReset("e")} }
+            onPress() {if (player.e.unlocked && canReset("e")) {doReset("e")}}
         }
     ],
     layerShown() {return player.g.upgrades.includes(25) || player.e.unlocked},
@@ -1141,7 +1126,7 @@ addLayer("e", {
     type: "static",
     baseResource: "points",
     baseAmount() {return player.points},
-    requires:new Decimal("e28745"),
+    requires: new Decimal("e28745"),
     exponent() {
         let exp = new Decimal(4)
         return exp
@@ -1151,7 +1136,16 @@ addLayer("e", {
         return base
     },
     doReset(layer) {
-        if (layer === "inf") {return}
+        if (layer === "h") {
+            player.e.points = new Decimal(5)
+            player.e.best = new Decimal(5)
+        }
+        if (layer === "inf") {
+            if (player.inf.milestones.includes("3")) {
+                player.e.points = new Decimal(10)
+                player.e.best = new Decimal(10)
+            }
+        }
     },
     resetsNothing: true,
     upgrades: {
@@ -1180,6 +1174,7 @@ addLayer("e", {
                 let base = new Decimal(2).pow(player.e.points)
                 return base
             },
+            unlocked() {return player.e.upgrades.includes(11)},
             canAfford() {return player.points.gte("e29990")},
             pay() {return}
         },
@@ -1194,6 +1189,7 @@ addLayer("e", {
                 let base = new Decimal(1.5).pow(player.e.points)
                 return base
             },
+            unlocked() {return player.e.upgrades.includes(12)},
             canAfford() {return player.points.gte("e31320")},
             pay() {return}
         },
@@ -1208,6 +1204,7 @@ addLayer("e", {
                 let base = new Decimal(0.01).mul(player.e.points)
                 return base
             },
+            unlocked() {return player.e.upgrades.includes(13)},
             canAfford() {return player.points.gte("e42211")},
             pay() {return}
         },
@@ -1217,8 +1214,236 @@ addLayer("e", {
                 Booster milestone's first effect's exponent +1.0001.<br>
                 Req: e75,000 points`
             },
+            unlocked() {return player.e.upgrades.includes(14)},
             canAfford() {return player.points.gte("e75000")},
             pay() {return}
+        }
+    }
+})
+addLayer("h", {
+    name: "hindrance",
+    startData() {return {
+        unlocked: false,
+		points: new Decimal(0),
+        best: new Decimal(0),
+        challPoints: [
+            new Decimal(0),
+            new Decimal(0),
+            new Decimal(0),
+            new Decimal(0)
+        ],
+        cap: new Decimal(10)
+    }},
+    color: "#a14040",
+    row: 3,
+    resource() {return `hindered error${player.h.points.eq(1) ? "" : "s"}`},
+    hotkeys: [
+        {
+            key: "h",
+            description: "h: reset your points for hindered errors",
+            onPress() {if (player.h.unlocked && canReset("h")) {doReset("h")}}
+        }
+    ],
+    layerShown() {return player.inf.points.gte(3) || player.h.unlocked},
+    symbol: "H",
+    position: 1,
+    branches: ["t", "e"],
+    type: "normal",
+    baseResource: "point exponent",
+    baseAmount() {return player.points.log10()},
+    requires: new Decimal(2000),
+    exponent() {
+        let exp = new Decimal(0.69)
+        return exp
+    },
+    doReset(layer) {
+        if (layer === "inf") {
+            player.h.points = new Decimal(0)
+            player.h.best = new Decimal(0)
+            player.h.upgrades = []
+            player.h.challPoints = [
+                new Decimal(0),
+                new Decimal(0),
+                new Decimal(0),
+                new Decimal(0)
+            ]
+        }
+    },
+    challenges: {
+        11: {
+            name: `Uncaught TypeError: Cannot read property 'effect' of undefined<br>
+            at getPointGain (mod.js:51)`,
+            challengeDescription: "<h3>Prestige Boost</h3> does not boost point gain.",
+            goalDescription: "69 point exponent per challenge essence",
+            canComplete() {return false},
+            rewardDescription() {
+                return `Challenge essence adds to booster milestone's first effect's exponent.<br>
+                Challenge essence: <h3 style='color: #a14040; text-shadow: #a14040 0px 0px 10px'>${format(player.h.challPoints[0], 3)}</h3><br>
+                Currently: +${format(tmp.h.challenges[11].reward, 3)}`
+            },
+            reward() {
+                let base = player.h.challPoints[0]
+                return base
+            },
+            essence() {
+                if (player.h.activeChallenge !== 11) {return}
+                let base = player.points.add(1).log10().div(69)
+                if (base.gte(player.h.challPoints[0])) {player.h.challPoints[0] = base}
+            },
+            onEnter() {
+                player.points = new Decimal(0)
+            },
+            style: {"height": "325px", "width": "325px", "border-radius": "20%"}
+        },
+    },
+    upgrades: {
+        11: {
+            fullDisplay() {
+                return `<h3>Hindered Points</h3><br>
+                Best hindered errors boost booster milestone's first effect's exponent, up to ${player.h.cap} best hindered errors.<br>
+                Cost: 1 hindered error<br>
+                Currently: x${format(tmp.h.upgrades[11].effect, 2)}`
+            },
+            effect() {
+                let cap = new Decimal(10)
+                if (player.h.upgrades.includes(12)) {cap = cap.add(90)}
+                if (player.h.upgrades.includes(14)) {cap = cap.add(900)}
+                player.h.cap = cap
+                let effective = player.h.best.min(cap)
+                let base = effective.add(2).log2()
+                if (player.h.upgrades.includes(13)) {base = base.pow(10)}
+                if (player.h.upgrades.includes(14)) {base = base.tetrate(1.05)}
+                return base
+            },
+            canAfford() {return player.h.points.gte(1)},
+            pay() {player.h.points = player.h.points.sub(1)}
+        },
+        12: {
+            fullDisplay() {
+                return `<h3>Hindered Boost</h3><br>
+                <h3 style='color: #a14040; text-shadow: #000000 0px 0px 10px'>Hindered Points</h3>'s cap +90, <h3 style='color: #a14040; text-shadow: #000000 0px 0px 10px'>Hindered Points</h3>'s effect applies to booster milestone's last effect and booster milestone's first effect's exponent ^4.20.<br>
+                Cost: 10 hindered errors`
+            },
+            unlocked() {return player.h.upgrades.includes(11)},
+            canAfford() {return player.h.points.gte(10)},
+            pay() {player.h.points = player.h.points.sub(10)}
+        },
+        13: {
+            fullDisplay() {
+                return `<h3>Hindered Booster</h3><br>
+                <h3 style='color: #a14040; text-shadow: #000000 0px 0px 10px'>Hindered Points</h3>'s effect ^10.<br>
+                Cost: 25 hindered errors`
+            },
+            unlocked() {return player.h.upgrades.includes(12)},
+            canAfford() {return player.h.points.gte(25)},
+            pay() {player.h.points = player.h.points.sub(25)}
+        },
+        14: {
+            fullDisplay() {
+                return `<h3>Hindered Boostest</h3><br>
+                <h3 style='color: #a14040; text-shadow: #000000 0px 0px 10px'>Hindered Points</h3>'s cap +900 and <h3 style='color: #a14040; text-shadow: #000000 0px 0px 10px'>Hindered Points</h3>'s effect ^^1.05.<br>
+                Req: 6.5 first challenge essence`
+            },
+            unlocked() {return player.h.upgrades.includes(13)},
+            canAfford() {return player.h.challPoints[0].gte(6.5)},
+            pay() {return}
+        },
+        15: {
+            fullDisplay() {
+                return `<h3>Hindered Prestige</h3><br>
+                Booster milestone's first effect's exponent ^10.<br>
+                Cost: 2000 hindered errors`
+            },
+            unlocked() {return player.h.upgrades.includes(14)},
+            canAfford() {return player.h.points.gte(2000)},
+            pay() {player.h.points = player.h.points.sub(2000)}
+        }
+    },
+    milestones: {
+        0: {
+            requirementDescription: "15 hindered errors",
+            effectDescription: "You can buy max time power and space power.",
+            done() {return player.h.best.gte(15)}
+        },
+        1: {
+            requirementDescription: "20 hindered errors",
+            effectDescription: "Auto buy boosters, generators, time power and space power.",
+            done() {return player.h.best.gte(20)}
+        },
+        2: {
+            requirementDescription: "50 hindered errors",
+            effectDescription: "Keep time power upgrades on hindrance reset. Keep space power upgrades on hindrance reset.",
+            done() {return player.h.best.gte(50)}
+        }
+    },
+    tabFormat: [
+        "main-display",
+        "prestige-button",
+        "blank",
+        [
+            "display-text",
+            function() {
+                return "Challenges cap the booster milestone's first effect at 100%"
+            }
+        ],
+        "milestones",
+        "upgrades",
+        "challenges"
+    ]
+})
+addLayer("inf", {
+    name: "infinity",
+    startData() {return {
+        unlocked: false,
+		points: new Decimal(0),
+        best: new Decimal(0)
+    }},
+    color: "#ffffff",
+    row: 69420,
+    displayRow: "side",
+    resource: "infinity points",
+    hotkeys: [
+        {
+            key: "I",
+            description: "shift+i: reset your points for infinity points",
+            onPress() {if (player.inf.unlocked && canReset("inf")) {doReset("inf")}}
+        }
+    ],
+    layerShown() {return player.b.upgrades.includes(15) || player.inf.unlocked},
+    symbol: "I",
+    position: 0,
+    type: "static",
+    baseResource: "points",
+    baseAmount() {return player.points},
+    requires: new Decimal(2).pow(1024),
+    exponent() {
+        let exp = new Decimal(2).pow(4)
+        return exp
+    },
+    base() {
+        let base = new Decimal(2).pow(32)
+        return base
+    },
+    milestones: {
+        0: {
+            requirementDescription: "1 infinity point",
+            effectDescription: "Point gain ^0.5 per milestone. Keep booster milestone on infinity reset. <h3 style='color: #31aeb0; text-shadow: #000000 0px 0px 10px'>Begin</h3> is 69420x stronger. <h3 style='color: #31aeb0; text-shadow: #000000 0px 0px 10px'>Prestige Boost</h3> is squared.",
+            done() {return player.inf.best.gte(1)}
+        },
+        1: {
+            requirementDescription: "2 infinity point",
+            effectDescription: "Prestige point exponent /2 per milestone. Keep generator upgrades on infinity reset. <h3 style='color: #31aeb0; text-shadow: #000000 0px 0px 10px'>Begin</h3> is 69420x stronger.",
+            done() {return player.inf.best.gte(2)}
+        },
+        2: {
+            requirementDescription: "3 infinity point",
+            effectDescription: "Prestige point exponent ^0.5 per milestone. Keep space milestones on infinity reset. Enhancers are not reset on infinity reset. <h3 style='color: #31aeb0; text-shadow: #000000 0px 0px 10px'>Begin</h3> is 69420x stronger.",
+            done() {return player.inf.best.gte(3)}
+        },
+        3: {
+            requirementDescription: "4 infinity point",
+            effectDescription: "Hindrance booster milestone cap applies outside of challenges. Keep hindrance milestones on infinity reset .Start infinity resets with 10 enhancers. <h3 style='color: #31aeb0; text-shadow: #000000 0px 0px 10px'>Begin</h3> is 69420x stronger.",
+            done() {return player.inf.best.gte(4)}
         }
     }
 })
