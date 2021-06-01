@@ -12,8 +12,8 @@ let modInfo = {
 
 // Set your version in num and name
 let VERSION = {
-	num: "0.0.2",
-	name: "ew choice :vomiting_face:",
+	num: "0.0.2.1",
+	name: "when you error",
 }
 
 let changelog = `<h1>Changelog:</h1><br>
@@ -24,7 +24,11 @@ let changelog = `<h1>Changelog:</h1><br>
 	<h3>v0.0.2</h3><br>
 		- layer 3 exists now<br>
 		- added stuff until 3 infinities<br>
-		- next up: get hindered<br>`
+		- next up: get hindered<br>
+	<h3>v0.0.2.1</h3><br>
+		- errors exist now<br>
+		- added stuff until 4 infinities<br>
+		- next up: chemistree reference???????<br>`
 
 let winText = `youre done pog`
 
