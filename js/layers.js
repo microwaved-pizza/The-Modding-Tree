@@ -1250,7 +1250,7 @@ addLayer("h", {
     branches: ["t", "e"],
     type: "normal",
     baseResource: "point exponent",
-    baseAmount() {return player.points.log10()},
+    baseAmount() {return player.points.add(1).log10()},
     requires: new Decimal(2000),
     exponent() {
         let exp = new Decimal(0.69)
