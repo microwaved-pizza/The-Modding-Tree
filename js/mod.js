@@ -93,11 +93,3 @@ function maxTickLength() {
 // you can cap their current resources with this.
 function fixOldSave(oldVersion){
 }
-
-function addAlignments() {
-	player.l.law = new Decimal(1)
-    player.l.chaos = new Decimal(1)
-    player.l.good = new Decimal(1)
-    player.l.evil = new Decimal(1)
-	player.l.unlocked = true
-}
