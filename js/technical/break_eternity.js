@@ -923,6 +923,25 @@
       if (IGNORE_COMMAS) { value = value.replace(",", ""); }
       else if (COMMAS_ARE_DECIMAL_POINTS) { value = value.replace(",", "."); }
     
+      // Handle xFy format
+      let letter = value.split("F")
+      if (letter.length === 2) {
+        let base = parseFloat(letter[0])
+        if (!base) {base = 1}
+        let height = parseFloat(letter[1])
+        let heightparts = letter[1].split(";")
+        if (heightparts.length === 2) {
+          let payload = parseFloat(heightparts[1]);
+          if (!isFinite(payload)) { payload = 1; }
+        }
+        if (isFinite(base) && isFinite(height)) {
+          let result = Decimal.tetrate(10, height + Math.log10(base), payload)
+          this.sign = result.sign
+          this.layer = result.layer
+          this.mag = result.mag
+          return this
+        }
+      }
       //Handle x^^^y format.
       var pentationparts = value.split("^^^");
       if (pentationparts.length === 2)

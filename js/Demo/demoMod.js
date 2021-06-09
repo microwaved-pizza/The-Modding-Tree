@@ -11,8 +11,8 @@ let modInfo = {
 
 // Set your version in num and name
 let VERSION = {
-	num: "2.5.9.2",
-	name: "Dreams Really Do Come True",
+	num: "2.6.1",
+	name: "Fixed Reality",
 }
 
 let changelog = `<h1>Changelog:</h1><br>
@@ -65,6 +65,10 @@ function isEndgame() {
 
 
 // Less important things beyond this point!
+
+// Style for the background, can be a function
+var backgroundStyle = {
+}
 
 // You can change this if you have things that can be messed up by long tick lengths
 function maxTickLength() {
