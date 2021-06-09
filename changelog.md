@@ -1,5 +1,69 @@
 # The Modding Tree changelog:
 
+## v2.6.1 - 6/7/21
+- Added global background style to mod.js.
+- Tree branches can have custom line widths.
+- If an upgrade has both canAfford and cost, it checks both. (So you can use canAfford for other things)
+- Releasing a held buyable/clickable with onHold doesn't click it again.
+- Fixed hard resetting while NaN'ed and exporting NaN saves for debugging.
+- Attempt to fix buttons sometimes not updating.
+- Added "instant" feature for bars. (not useful for most people)
+- Improvements to theme code, partially by Cubedey.
+
+## v2.6.0.1 - 6/4/21
+- Removed excess NaN alerts (now only checks player, not temp).
+- Fixed background images covering up tree branches.
+
+## v2.6: Fixed Reality - 6/3/21
+- Fixed issues with NaN checking. The game also will not save if the save is broken.
+- Added a drop-down menu component!
+- Added upgrade-tree component!
+- Options are now saved separately, and not affected by hard resetting or importing saves.
+- Fixed demo.html
+- Fixed branches not working on the right tab.
+- Fixed background color not working on the left tab.
+- Fixed branches not updating when tree tab is not shown.
+- You can now use "this" in tabFormat!
+- Added per-row displaying for achievements, challenges, milestones, grids, buyables, and clickables. THIS WILL BREAK BUYABLES/CLICKABLES THAT PREVIOUSLY USED THEIR TABFORMAT ARGUMENT FOR SIZE.
+- Added onComplete for milestones.
+- Added addBuyables.
+- The prestige/sec display now shows non-whole numbers.
+- resetsNothing now works immediately on a reset that enables it.
+- Made the star on maxed challenges larger.
+
+- diff can no longer be negative.
+- Fixed challenges with no currencyDisplayName using "points" instead of the mod's pointsName.
+- inChallenge no longer can return undefined.
+- Fixed certain things skipping negative rows (now they are treated like non-numeric rows, and don't appear in the tree still).
+- Things are 0.2% more optimized.
+- Fixed problems in the documentation.
+- Added more customization to the "mark" component (but not an easy way to access it)
+
+
+### v2.5.11.1 - 5/27/21
+- Fixed issues caused when the tree tab is disabled.
+
+### v2.5.11 - 5/27/21
+- Finished part 1 of the "making a mod" tutorial.
+- The challenge that you are currently in is highlighted, and will not be hidden if "hide completed challenges" is on and it is already completed.
+- Added leftTab, which makes a layer use the left tab instead of the right one (good for trees-within-trees and such)
+- Added startNavTab, which lets you choose which tab starts out on the left side.
+- Fixed the infobox not appearing in default tabFormat.
+- Fixed upgrade/buyable layering when they are hovered over.
+- Fixed devSpeed being applied twice.
+
+### v2.5.10.2 - 5/24/21
+- Fixed some things in the tree tab not being clickable.
+
+### v2.5.10.1 - 5/23/21
+- Actually fixed the tooltip issue.
+
+### v2.5.10 - 5/22/21
+- Tooltips can now show over the top overlay again.
+- Tweaked number formatting (e1000's keep the decimal places on the mantissa.)
+- Fixed text on two settings buttons not changing.
+- Started making a new tutorial.
+
 ### v2.5.9.2 - 5/19/21
 - Fixed many issues with things not updating.
 
@@ -374,7 +438,6 @@
 - Moved old changelogs to a separate place.
 - Fixed hasMilestone and incr_order.
 - Static layers now show the currency amount needed for the next one if you can buy max.
-
 
 
 ### v1.2.4 - 10/4/20

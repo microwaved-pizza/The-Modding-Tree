@@ -1,12 +1,11 @@
 var player;
 var needCanvasUpdate = true;
 var gameEnded = false;
-var scrolled = false;
 
 // Don't change this
 const TMT_VERSION = {
-	tmtNum: "2.5.9.2",
-	tmtName: "Dreams Really Do Come True"
+	tmtNum: "2.6.1",
+	tmtName: "Fixed Reality"
 }
 
 function getResetGain(layer, useType = null) {
@@ -131,7 +130,7 @@ function rowReset(row, layer) {
 	for (lr in ROW_LAYERS[row]){
 		if(layers[lr].doReset) {
 
-			player[lr].activeChallenge = null // Exit challenges on any row reset on an equal or higher row
+			Vue.set(player[lr], "activeChallenge", null) // Exit challenges on any row reset on an equal or higher row
 			run(layers[lr].doReset, layers[lr], layer)
 		}
 		else
@@ -140,7 +139,7 @@ function rowReset(row, layer) {
 }
 
 function layerDataReset(layer, keep = []) {
-	let storedData = {unlocked: player[layer].unlocked, forceTooltip: player[layer].forceTooltip, noRespecConfirm: player[layer].noRespecConfirm} // Always keep these
+	let storedData = {unlocked: player[layer].unlocked, forceTooltip: player[layer].forceTooltip, noRespecConfirm: player[layer].noRespecConfirm, prevTab:player[layer].prevTab} // Always keep these
 
 	for (thing in keep) {
 		if (player[layer][keep[thing]] !== undefined)
@@ -218,14 +217,14 @@ function doReset(layer, force=false) {
 		tmp[layer].baseAmount = decimalZero // quick fix
 	}
 
-	if (tmp[layer].resetsNothing) return
+	if (run(layers[layer].resetsNothing, layers[layer])) return
 
 
 	for (layerResetting in layers) {
 		if (row >= layers[layerResetting].row && (!force || layerResetting != layer)) completeChallenge(layerResetting)
 	}
 
-	prevOnReset = {...player} //Deep Copy
+	prevOnReset = {...player} 
 	player.points = (row == 0 ? decimalZero : getStartPoints())
 
 	for (let x = row; x >= 0; x--) rowReset(x, layer)
@@ -259,13 +258,13 @@ function startChallenge(layer, x) {
 	if (!player[layer].unlocked) return
 	if (player[layer].activeChallenge == x) {
 		completeChallenge(layer, x)
-		player[layer].activeChallenge = null
-	} else {
+		Vue.set(player[layer], "activeChallenge", null)
+		} else {
 		enter = true
 	}	
 	doReset(layer, true)
 	if(enter) {
-		player[layer].activeChallenge = x
+		Vue.set(player[layer], "activeChallenge", x)
 		run(layers[layer].challenges[x].onEnter, layers[layer].challenges[x])
 	}
 	updateChallengeTemp(layer)
@@ -302,8 +301,8 @@ function completeChallenge(layer, x) {
 	
 	let completions = canCompleteChallenge(layer, x)
 	if (!completions){
-		 player[layer].activeChallenge = null
-		 run(layers[layer].challenges[x].onExit, layers[layer].challenges[x])
+		Vue.set(player[layer], "activeChallenge", null)
+		run(layers[layer].challenges[x].onExit, layers[layer].challenges[x])
 		return
 	}
 	if (player[layer].challenges[x] < tmp[layer].challenges[x].completionLimit) {
@@ -312,7 +311,7 @@ function completeChallenge(layer, x) {
 		player[layer].challenges[x] = Math.min(player[layer].challenges[x], tmp[layer].challenges[x].completionLimit)
 		if (layers[layer].challenges[x].onComplete) run(layers[layer].challenges[x].onComplete, layers[layer].challenges[x])
 	}
-	player[layer].activeChallenge = null
+	Vue.set(player[layer], "activeChallenge", null)
 	run(layers[layer].challenges[x].onExit, layers[layer].challenges[x])
 	updateChallengeTemp(layer)
 }
@@ -329,15 +328,17 @@ function autobuyUpgrades(layer){
 }
 
 function gameLoop(diff) {
-	if (isEndgame() || gameEnded) gameEnded = 1
-
-	if (isNaN(diff)) diff = 0
-	if (gameEnded && !player.keepGoing) {
-		diff = 0
-		player.tab = "gameEnded"
+	if (isEndgame() || gameEnded){
+		gameEnded = 1
 		clearParticles()
 	}
-	if (player.devSpeed) diff *= player.devSpeed
+
+	if (isNaN(diff) || diff < 0) diff = 0
+	if (gameEnded && !player.keepGoing) {
+		diff = 0
+		//player.tab = "gameEnded"
+		clearParticles()
+	}
 
 	if (maxTickLength) {
 		let limit = maxTickLength()
@@ -391,10 +392,11 @@ function gameLoop(diff) {
 
 }
 
-function hardReset() {
+function hardReset(resetOptions) {
 	if (!confirm("Are you sure you want to do this? You will lose all your progress!")) return
 	player = null
-	save();
+	if(resetOptions) options = null
+	save(true);
 	window.location.reload();
 }
 

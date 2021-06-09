@@ -49,11 +49,7 @@ function format(decimal, precision = 2, small) {
     }
     if (decimal.sign < 0) return "-" + format(decimal.neg(), precision)
     if (decimal.mag == Number.POSITIVE_INFINITY) return "Infinity"
-    if (decimal.gte("eeee1000")) {
-        var slog = decimal.slog()
-        if (slog.gte(1e6)) return "F" + format(slog.floor())
-        else return Decimal.pow(10, slog.sub(slog.floor())).toStringWithDecimalPlaces(3) + "F" + commaFormat(slog.floor(), 0)
-    }
+    if (decimal.gte("eeee1000")) {return "F" + format(decimal.slog(), precision)}
     else if (decimal.gte("1ee9")) return exponentialFormat(decimal, precision, false)
     else if (decimal.gte(1e9)) return exponentialFormat(decimal, precision)
     else if (decimal.gte(1e3)) return commaFormat(decimal, 0)
@@ -72,18 +68,39 @@ function format(decimal, precision = 2, small) {
 }
 
 function formatWhole(decimal) {
-    decimal = new Decimal(decimal)
-    if (decimal.gte(1e9)) return format(decimal, 2)
-    if (decimal.lte(0.98) && !decimal.eq(0)) return format(decimal, 2)
+    decimal = new Decimal(decimal).round()
     return format(decimal, 0)
 }
 
-function formatTime(s) {
-    if (s < 60) return format(s) + "s"
-    else if (s < 3600) return formatWhole(Math.floor(s / 60)) + "m " + format(s % 60) + "s"
-    else if (s < 86400) return formatWhole(Math.floor(s / 3600)) + "h " + formatWhole(Math.floor(s / 60) % 60) + "m " + format(s % 60) + "s"
-    else if (s < 31536000) return formatWhole(Math.floor(s / 86400) % 365) + "d " + formatWhole(Math.floor(s / 3600) % 24) + "h " + formatWhole(Math.floor(s / 60) % 60) + "m " + format(s % 60) + "s"
-    else return formatWhole(Math.floor(s / 31536000)) + "y " + formatWhole(Math.floor(s / 86400) % 365) + "d " + formatWhole(Math.floor(s / 3600) % 24) + "h " + formatWhole(Math.floor(s / 60) % 60) + "m " + format(s % 60) + "s"
+function formatTime(s, milli = false) {
+    if (!milli) {
+        if (s < 60) return format(s) + "s"
+        else if (s < 3600) return formatWhole(Math.floor(s / 60)) + "m " + format(s % 60) + "s"
+        else if (s < 86400) return formatWhole(Math.floor(s / 3600)) + "h " + formatWhole(Math.floor(s / 60) % 60) + "m " + format(s % 60) + "s"
+        else if (s < 31536000) return formatWhole(Math.floor(s / 86400) % 365) + "d " + formatWhole(Math.floor(s / 3600) % 24) + "h " + formatWhole(Math.floor(s / 60) % 60) + "m " + format(s % 60) + "s"
+        else return formatWhole(Math.floor(s / 31536000)) + "y " + formatWhole(Math.floor(s / 86400) % 365) + "d " + formatWhole(Math.floor(s / 3600) % 24) + "h " + formatWhole(Math.floor(s / 60) % 60) + "m " + format(s % 60) + "s"
+    }
+    else {
+        ms = " " + Math.round(s % 1 * 1000) + "ms"
+        if (s < 60) return formatWhole(Math.floor(s)) + "s" + ms
+        else if (s < 3600) return formatWhole(Math.floor(s / 60)) + "m " + formatWhole(Math.floor(s % 60)) + "s" + ms
+        else if (s < 86400) return formatWhole(Math.floor(s / 3600)) + "h " + formatWhole(Math.floor(s / 60) % 60) + "m " + formatWhole(Math.floor(s % 60)) + "s" + ms
+        else if (s < 31536000) return formatWhole(Math.floor(s / 86400) % 365) + "d " + formatWhole(Math.floor(s / 3600) % 24) + "h " + formatWhole(Math.floor(s / 60) % 60) + "m " + formatWhole(Math.floor(s % 60)) + "s" + ms
+        else return formatWhole(Math.floor(s / 31536000)) + "y " + formatWhole(Math.floor(s / 86400) % 365) + "d " + formatWhole(Math.floor(s / 3600) % 24) + "h " + formatWhole(Math.floor(s / 60) % 60) + "m " + formatWhole(Math.floor(s % 60)) + "s" + ms
+    }
+}
+function formatDecimalTime(s, milli = false) {
+    s = new Decimal(s)
+    if (!milli) {
+        if (s.gte("3.1536e107")) {return format(s.div("3.1536e107")) + " heat deaths"}
+        else if (s.gte(31536000000000000)) {return format(s.div(31536000000)) + " millenia"}
+        else if (s.gte(31536000000)) {return formatWhole(s.div(31536000000).floor()) + " millenia " + formatWhole(s.div(31536000).floor() % 1000) + "y " + formatWhole(s.div(86400).floor() % 365) + "d"}
+        else if (s.gte(31536000)) {return formatWhole(s.div(31536000).floor()) + "y " + formatWhole(s.div(86400).floor() % 365) + "d " + formatWhole(s.div(3600).floor() % 24) + "h"}
+        else if (s.gte(86400)) {return formatWhole(s.div(86400).floor()) + "d " + formatWhole(s.div(3600).floor() % 24) + "h " + formatWhole(s.div(60).floor() % 60) + "m " + format(s % 60) + "s"}
+        else if (s.gte(3600)) {return formatWhole(s.div(3600).floor()) + "h " + formatWhole(s.div(60).floor() % 60) + "m " + format(s % 60) + "s"}
+        else if (s.gte(60)) {return formatWhole(s.div(60).floor()) + "m " + format(s % 60) + "s"}
+        else {return format(s) + "s"}
+    }
 }
 
 function toPlaces(x, precision, maxAccepted) {
